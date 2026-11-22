@@ -1,0 +1,13 @@
+{
+  "source": "SQL Developer desktop export from HR.S4_HR_REPORTING_MV on AWS",
+  "rows": 107,
+  "distinct_employees": 107,
+  "salary_total": 691416,
+  "snapshot_utc": [
+    "2026-11-22T03:36:18Z"
+  ],
+  "raw_sha256": "db3df1380f78cb1233dee483198c428942391c5c34a61bd08dda571e9c347516",
+  "import_sha256": "502384d77ac07b3834105452b77b6e2357b3e4ea659cde674685b8d7c0e01c4b",
+  "transformation": "Extract results[0].items as a top-level JSON array. Row values and omitted null properties are unchanged.",
+  "row_values_identical": true
+}
