@@ -1,6 +1,6 @@
 -- ============================================================
 -- Project: Multicloud Database Operations
--- Scenario: Scenario 1 - Security &amp; Audit
+-- Scenario: Scenario 1 - Security & Audit
 -- Author: Jacqueline Cruz Solis
 -- Date: November 16th, 2026
 -- Description: Oracle Unified Auditing
@@ -8,21 +8,59 @@
 -- ============================================================
 
 -- create audit policy on salary
-create audit policy salary_access_pol 
-actions select(salary) on hr.employees;
 
--- enable policy for all users (sys)
-audit policy salary_access_pol;
-audit policy salary_access_pol by sys;
+FGA policy: (sys)
+BEGIN
+  DBMS_FGA.ADD_POLICY(
+    object_schema => 'HR',
+    object_name => 'employees',
+    policy_name => 'audit_salary_access',
+    audit_column => 'salary',
+    enable => true,
+    statement_types => 'insert, update, select, delete'
+  );
+END;
+/
+
+
+
+-- enable policy for all sys user
+ALTER SYSTEM SET audit_sys_operations = TRUE SCOPE=SPFILE;
+
+shutdown immediate;
+startup;
+
+Select * from UNIFIED_AUDIT_TRAIL 
+where AUDIT_TYPE = FineGrainedAudit;
+
+SELECT 
+    DBUSERNAME, 
+    EVENT_TIMESTAMP, 
+    ACTION_NAME, 
+    OBJECT_SCHEMA, 
+    OBJECT_NAME, 
+    SQL_TEXT,
+    FGA_POLICY_NAME
+FROM UNIFIED_AUDIT_TRAIL
+WHERE FGA_POLICY_NAME = 'SALARY_ACCESS_POLICY'
+ORDER BY EVENT_TIMESTAMP DESC;
+
+select * from AUDSYS.AUD$UNIFIED;
 
 -- create an audit policy that logs all database connections off working
-create audit policy offhours_logon_pol
-    actions logon
-    when 'TO_NUMBER(TO_CHAR(SYSDATE, ''HH24'')) < 8 OR 
-        TO_NUMBER(TO_CHAR(SYSDATE, ''HH24'')) >= 18' 
-evaluate per statement; 
+BEGIN
+  DBMS_FGA.ADD_POLICY(
+   object_schema      => 'HR',
+   object_name        => 'EMPLOYEES',
+   policy_name        => 'chk_hr_employees',
+   audit_condition   => '' TO_CHAR(SYSDATE, ''DY'', ''NLS_DATE_LANGUAGE=ENGLISH'') IN (''SAT'', ''SUN'') AND SYS_CONTEXT(''USERENV'', ''SESSION_USER'') = ''HR'',
+   audit_column       => 'SALARY',
+   enable             =>  TRUE,
+   statement_types    => 'INSERT, UPDATE, SELECT, DELETE');
+END;
+/
 
 -- enable the policy
-audit policy offhours_logon_pol;
+
 
 
